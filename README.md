@@ -4,12 +4,12 @@ A tool for your agent to reproduce vulnerabilities. Hand your coding agent a rep
 plans the experiment, builds a local Docker lab, attacks it, and comes back with a verdict
 decided by what the target and a simulated victim showed, not by what the agent says.
 
-```
-Report ──────> Sandbox ─────────────────────────> Attack ─────────────────> Recap
-plan.json      compose lab, up, readiness,        pb attack -- ...          verdict (code)
-(agent)        roles, seed, repair (≤3 starts),   (scoped container)        cleanup receipt
-               baselines                          victim/observe after
-```
+![demo.sh then control.sh: Grafana 10.2.5 reproduced, 10.2.6 not observed](docs/demo.gif)
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/pipeline-dark.svg">
+  <img alt="Report (plan.json) → Sandbox (pb up, pb smoke) → Attack (pb attack) → Recap (pb verdict, pb down)" src="docs/pipeline-light.svg">
+</picture>
 
 ## What it enforces
 

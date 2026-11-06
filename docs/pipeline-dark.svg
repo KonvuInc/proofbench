@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="300" viewBox="0 0 1000 300" role="img" aria-label="proofbench pipeline: report, sandbox, attack, recap">
+<defs><marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#5E4D8F"/></marker></defs>
+<rect x="10" y="20" width="212" height="196" rx="14" fill="#1E1238" stroke="#3E2D6B" stroke-width="1.5"/>
+<rect x="28" y="20" width="44" height="4" rx="2" fill="#FFFFFF"/>
+<text x="28" y="56" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#A99FC6" letter-spacing="1">1</text>
+<text x="44" y="56" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="17" font-weight="700" fill="#FFFFFF" letter-spacing="1.2">REPORT</text>
+<rect x="26" y="72" width="180" height="28" rx="7" fill="#2D1266"/>
+<text x="38" y="91" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" fill="#FFD1DE">plan.json</text>
+<text x="28" y="128" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13.5" fill="#CFC7E6">Agent pins the version,</text>
+<text x="28" y="149" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13.5" fill="#CFC7E6">prerequisites and the</text>
+<text x="28" y="170" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13.5" fill="#CFC7E6">oracle that would prove it</text>
+<rect x="28" y="190" width="55.0" height="20" rx="10" fill="#7A63C9"/>
+<text x="37" y="204" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="600" fill="#FFFFFF">agent</text>
+<line x1="228" y1="118.0" x2="258" y2="118.0" stroke="#5E4D8F" stroke-width="2" marker-end="url(#a)"/>
+<rect x="266" y="20" width="212" height="196" rx="14" fill="#1E1238" stroke="#3E2D6B" stroke-width="1.5"/>
+<rect x="284" y="20" width="44" height="4" rx="2" fill="#FFFFFF"/>
+<text x="284" y="56" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#A99FC6" letter-spacing="1">2</text>
+<text x="300" y="56" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="17" font-weight="700" fill="#FFFFFF" letter-spacing="1.2">SANDBOX</text>
+<rect x="282" y="72" width="180" height="28" rx="7" fill="#2D1266"/>
+<text x="294" y="91" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" fill="#FFD1DE">pb up · pb smoke</text>
+<text x="284" y="128" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13.5" fill="#CFC7E6">Internal Docker lab,</text>
+<text x="284" y="149" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13.5" fill="#CFC7E6">readiness and roles checked,</text>
+<text x="284" y="170" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13.5" fill="#CFC7E6">≤ 3 repairs, baselines</text>
+<rect x="284" y="190" width="62.400000000000006" height="20" rx="10" fill="#FF7397"/>
+<text x="293" y="204" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="600" fill="#FFFFFF">pb CLI</text>
+<line x1="484" y1="118.0" x2="514" y2="118.0" stroke="#5E4D8F" stroke-width="2" marker-end="url(#a)"/>
+<rect x="522" y="20" width="212" height="196" rx="14" fill="#1E1238" stroke="#3E2D6B" stroke-width="1.5"/>
+<rect x="540" y="20" width="44" height="4" rx="2" fill="#FF7397"/>
+<text x="540" y="56" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#A99FC6" letter-spacing="1">3</text>
+<text x="556" y="56" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="17" font-weight="700" fill="#FFFFFF" letter-spacing="1.2">ATTACK</text>
+<rect x="538" y="72" width="180" height="28" rx="7" fill="#2D1266"/>
+<text x="550" y="91" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" fill="#FFD1DE">pb attack -- …</text>
+<text x="540" y="128" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13.5" fill="#CFC7E6">No-caps container on the</text>
+<text x="540" y="149" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13.5" fill="#CFC7E6">lab network; the plan</text>
+<text x="540" y="170" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13.5" fill="#CFC7E6">locks at the first exploit</text>
+<rect x="540" y="190" width="62.400000000000006" height="20" rx="10" fill="#FF7397"/>
+<text x="549" y="204" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="600" fill="#FFFFFF">pb CLI</text>
+<line x1="740" y1="118.0" x2="770" y2="118.0" stroke="#5E4D8F" stroke-width="2" marker-end="url(#a)"/>
+<rect x="778" y="20" width="212" height="196" rx="14" fill="#1E1238" stroke="#3E2D6B" stroke-width="1.5"/>
+<rect x="796" y="20" width="44" height="4" rx="2" fill="#00D773"/>
+<text x="796" y="56" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#A99FC6" letter-spacing="1">4</text>
+<text x="812" y="56" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="17" font-weight="700" fill="#FFFFFF" letter-spacing="1.2">RECAP</text>
+<rect x="794" y="72" width="180" height="28" rx="7" fill="#2D1266"/>
+<text x="806" y="91" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" fill="#FFD1DE">pb verdict · pb down</text>
+<text x="796" y="128" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13.5" fill="#CFC7E6">Verdict computed from</text>
+<text x="796" y="149" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13.5" fill="#CFC7E6">observations, then a</text>
+<text x="796" y="170" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13.5" fill="#CFC7E6">cleanup receipt</text>
+<rect x="796" y="190" width="62.400000000000006" height="20" rx="10" fill="#FF7397"/>
+<text x="805" y="204" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="600" fill="#FFFFFF">pb CLI</text>
+<text x="500.0" y="268" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" fill="#A99FC6">The agent writes the plan, the lab and the payloads. <tspan fill="#FF7397" font-weight="600">pb</tspan> owns everything that decides the outcome.</text>
+</svg>
