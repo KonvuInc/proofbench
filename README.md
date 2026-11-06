@@ -13,8 +13,9 @@ plan.json      compose lab, up, readiness,        pb attack -- ...          verd
 
 ## What it enforces
 
-The patterns from the OWASP Global AppSec San Francisco 2026 talk *Reproducing the exploit,
-not the report*, enforced in code rather than asked of the agent:
+The patterns from the OWASP Global AppSec San Francisco 2026 talk
+[*Reproducing the exploit, not the report*](talk/owasp-appsec-sf-2026.pdf) (slides), enforced
+in code rather than asked of the agent:
 
 1. **Check the target, not the agent.** The verdict comes from read-only target state, a
    canary in a simulated victim's browser, or a planted secret reaching the attacker, never
