@@ -3,6 +3,10 @@
 import sys
 from pathlib import Path
 
+if sys.version_info < (3, 11):
+    sys.exit(f"pb needs Python 3.11 or newer, found {sys.version.split()[0]} ({sys.executable}).\n"
+             "Install a newer one (e.g. `brew install python`) and put it first on your PATH.")
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from proofbench.cli import main
