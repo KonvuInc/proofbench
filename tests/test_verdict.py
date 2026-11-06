@@ -38,6 +38,9 @@ class Verdict(unittest.TestCase):
             got = outcome(PLAN, READY, victim_before=before, victim_after=after)["outcome"]
             self.assertEqual(got, expected, (before, after))
 
+        unreached = outcome(PLAN, READY, victim_before=trace(), victim_after=trace(steps_ok=False))
+        self.assertIn("hover", unreached["assertions"][0]["reason"])  # names the step that failed
+
     def test_gates(self):
         evidence = {"victim_before": trace(), "victim_after": trace(canary=True)}
         not_ready = {**READY, "readiness": {"ok": False}}
@@ -54,6 +57,12 @@ class Verdict(unittest.TestCase):
         self.assertEqual(decide(plan, READY, {**ev, "observations_before": obs("1"), "observations_after": obs("2")})["outcome"], "reproduced")
         self.assertEqual(decide(plan, READY, {**ev, "observations_before": obs("1"), "observations_after": obs("1")})["outcome"], "not_observed")
         self.assertEqual(decide(plan, READY, {**ev, "observations_before": obs("1"), "observations_after": obs("", 1)})["outcome"], "inconclusive")
+        self.assertEqual(decide(plan, READY, {**ev, "observations_after": obs("2")})["outcome"], "inconclusive")
+
+        # A secondary assertion cannot block a proven primary; "primary" defaults to true.
+        implicit = {**PLAN, "assertions": [{k: v for k, v in STATE.items() if k != "primary"}, {**CANARY, "primary": False}]}
+        unreached = {**ev, "victim_after": trace(steps_ok=False), "observations_before": obs("1"), "observations_after": obs("2")}
+        self.assertEqual(decide(implicit, READY, unreached)["outcome"], "reproduced")
 
     def test_crashed_attack_is_never_not_observed(self):
         # A crashed exploit cannot show the patch works; an effect it caused still counts.
@@ -90,6 +99,8 @@ class Plan(unittest.TestCase):
     def test_validate(self):
         self.assertEqual(validate(PLAN), [])
         self.assertTrue(validate({**PLAN, "target": {**PLAN["target"], "image": "app:latest"}}))
+        self.assertTrue(validate({**PLAN, "readiness": [{"name": "h"}]}))  # no url
+        self.assertTrue(validate({**PLAN, "assertions": [{**CANARY, "claim": ""}]}))
         self.assertTrue(validate({**PLAN, "victim": {"steps": [{"eval": "x"}]}}))
         self.assertTrue(validate({**PLAN, "assertions": [{**STATE, "oracle": {"type": "state_diff", "observation": "nope"}}]}))
         seed = {"id": "users", "service": "db", "cmd": "select 1"}

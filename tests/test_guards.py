@@ -9,7 +9,7 @@ from pathlib import Path
 from unittest import mock
 
 from proofbench import cli, controller, docker, ui
-from proofbench.run import Run
+from proofbench.run import Refused, Run
 
 PLAN = {"claim": "c", "target": {"image": "app:1.0", "service": "app", "base_url": "http://app"},
         "readiness": [{"name": "h", "url": "http://app/h", "contains": "ok"}],
@@ -98,6 +98,33 @@ class Gates(unittest.TestCase):
             cli.cmd_attack(Namespace(run=str(run), cmd=["id"]))
         self.assertIn("stopped", str(refused.exception))
 
+    def test_attack_budget(self):
+        run = make_run({"readiness": {"ok": True},
+                        "attack": {"plan_sha256": "x", "commands": controller.MAX_ATTACK_COMMANDS - 1}})
+        (run / "verification").mkdir()
+        (run / "verification" / "observations-before.json").write_text("{}")
+        done = subprocess.CompletedProcess([], 0, "", "")
+
+        with mock.patch.object(docker, "run_attacker", return_value=done):
+            controller.attack(Run(str(run)), PLAN, "last")
+            with self.assertRaises(Refused):
+                controller.attack(Run(str(run)), PLAN, "one more")
+
+    def test_attack_is_logged_by_the_controller(self):
+        # The leak oracle reads secret_seen from this log; the attacker never writes it.
+        run = make_run({"readiness": {"ok": True}, "secret": "s3cr3t"})
+        (run / "verification").mkdir()
+        (run / "verification" / "observations-before.json").write_text("{}")
+        leaked = subprocess.CompletedProcess([], 1, "token=s3cr3t", "")
+
+        with mock.patch.object(docker, "run_attacker", return_value=leaked):
+            result = controller.attack(Run(str(run)), PLAN, "curl app")
+
+        entry = json.loads((run / "attack" / "log.jsonl").read_text())
+        self.assertFalse(result.ok)
+        self.assertEqual((entry["exit"], entry["secret_seen"]), (1, True))
+        self.assertEqual(json.loads((run / "run.json").read_text())["attack"]["commands"], 1)
+
     def test_attack_command_keeps_quoting(self):
         self.assertEqual(cli.shell_cmd(["python", "-c", "print(1)"]), "python -c 'print(1)'")
         self.assertEqual(cli.shell_cmd(["python a.py && cat out"]), "python a.py && cat out")
@@ -138,6 +165,46 @@ class Lifecycle(unittest.TestCase):
                 mock.patch.object(docker, "image_digest", return_value=""):
             deployment = controller.start_lab(Run(str(run)), PLAN)
         self.assertTrue(deployment.ok)
+        self.assertEqual(deployment.diff, "")  # a first attempt has nothing to diff against
+
+    def test_last_lab_start_records_failure(self):
+        # The final allowed start: a failed compose keeps its diagnostics, then the budget refuses.
+        run = make_run({"secret": "s3cr3t", "deploys": [{}] * (controller.MAX_DEPLOY_ATTEMPTS - 1)})
+        (run / "lab").mkdir()
+        (run / "lab" / "compose.yml").write_text("services: {}")
+        previous = run / "deployment" / f"attempt-{controller.MAX_DEPLOY_ATTEMPTS - 1}"
+        previous.mkdir(parents=True)
+        (previous / "compose.yml").write_text("services: {app: {}}")
+        config = {"services": {"app": {"image": "app:1.0", "environment": {"TOKEN": "s3cr3t"}}},
+                  "networks": {"default": {}}}
+        failed = subprocess.CompletedProcess([], 1, "", "boom")
+
+        lab_run = Run(str(run))
+        with mock.patch.object(docker, "compose_config", return_value=config), \
+                mock.patch.object(docker, "compose_up", return_value=failed), \
+                mock.patch.object(docker, "compose_diagnostics", return_value="diagnostics"), \
+                mock.patch.object(docker, "image_digest", return_value=""):
+            deployment = controller.start_lab(lab_run, PLAN)
+            with self.assertRaises(Refused):
+                controller.start_lab(Run(str(run)), PLAN)
+
+        self.assertEqual((deployment.attempt, deployment.ok), (controller.MAX_DEPLOY_ATTEMPTS, False))
+        self.assertIn("diagnostics", deployment.log)
+        self.assertIn("-services: {app: {}}", deployment.diff)  # the repair since the previous attempt
+        self.assertTrue(lab_run.state["secret_in_lab"])
+
+    def test_cleanup_receipt_reports_what_is_left(self):
+        run = make_run({})
+        (run / "lab").mkdir()
+        (run / "lab" / "compose.yml").write_text("services: {}")
+        empty = {"containers": [], "volumes": [], "networks": []}
+        cases = [(0, empty, True), (1, empty, False), (0, {**empty, "containers": ["app"]}, False)]
+
+        for down_exit, left, clean in cases:
+            down = subprocess.CompletedProcess([], down_exit, "", "")
+            with mock.patch.object(docker, "compose_down", return_value=down), \
+                    mock.patch.object(docker, "leftovers", return_value=left):
+                self.assertEqual(controller.teardown(Run(str(run)))["clean"], clean, (down_exit, left))
 
     def test_replay_runs_every_command_then_fails(self):
         # One failing command must not skip the rest of the locked exploit.
