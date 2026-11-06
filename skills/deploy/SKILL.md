@@ -35,6 +35,9 @@ write/repair lab ──> pb up ──fail──> read the diagnostic ──> rep
   and published ports don't reach your host. Do installs in an image `build:` (builds
   still have internet), not in a startup command. `network_mode` and external networks
   are refused.
+- Mounts, build contexts and `configs`/`secrets` files must live inside the run folder
+  (`lab/`, `../attack/work/`); `pb up` refuses any host path outside it, including
+  symlinks that lead out and named volumes with `driver_opts`. Copy what you need into `lab/`.
 - After 3 starts the budget is spent. Run `pb verdict` (it will say inconclusive) and
   `pb down`. Don't create a new run to dodge the budget.
 - Each `up` snapshots `lab/` and prints the diff since the previous attempt. That diff is

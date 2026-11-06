@@ -162,7 +162,7 @@ def new_run(report: Path, lab: Path | None) -> Run:
     shutil.copy(report, run_dir / "report.md")
 
     if lab:
-        shutil.copytree(lab, run_dir / "lab")
+        shutil.copytree(lab, run_dir / "lab", symlinks=True)  # kept as links, so `up` can refuse ones leaving the run
 
     state = {"id": run_id, "created": time.time(), "report_sha256": sha256(report.read_bytes()),
              "nonce": secrets.token_hex(NONCE_BYTES), "secret": secrets.token_hex(SECRET_BYTES),
@@ -204,13 +204,15 @@ def create_control(src: Run) -> Run:
     plan["target"]["image"] = patched
     plan["control_of"] = src.id
     (run.dir / "plan.json").write_text(json.dumps(plan, indent=2))
-    shutil.copytree(src.dir / "lab", run.dir / "lab")
+    shutil.copytree(src.dir / "lab", run.dir / "lab", symlinks=True)
     compose = run.dir / "lab" / "compose.yml"
     compose.write_text(compose.read_text().replace(vulnerable_image, patched))
 
     # Exploit template, kept out of work/ until `replay` so the baseline sees the benign lab.
     template = run.dir / "attack" / "template"
-    shutil.copytree(src.dir / "attack" / "work", template)
+    # Attacker-made symlinks are dropped: following them would copy host files into the replay.
+    shutil.copytree(src.dir / "attack" / "work", template,
+                    ignore=lambda folder, names: [n for n in names if (Path(folder) / n).is_symlink()])
     template_hash = hashlib.sha256()
     for file in sorted(template.rglob("*")):
         if not file.is_file():

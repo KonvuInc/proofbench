@@ -37,7 +37,7 @@ agent writes the plan, the lab and the payloads. The CLI owns everything that de
 | Owned by the CLI | How |
 |---|---|
 | Version pin | `up` refuses a lab whose target image differs from `plan.json` |
-| Containment | every lab network is forced `internal` (no internet); host networks, external networks, privileged mode, added capabilities, host namespaces and Docker-socket or host-root mounts are refused; the attacker container drops all capabilities |
+| Containment | every lab network is forced `internal` (no internet, no published ports); a lab may mount, build from or read only files inside its own run folder (symlinks resolved), which keeps out the Docker socket and the rest of the host; host networks, external networks and volumes, driver-backed volumes, privileged mode, added capabilities and host namespaces are refused; the attacker container drops all capabilities |
 | Readiness | probes from inside the lab network, GET/HEAD/OPTIONS only, so they cannot fire the exploit |
 | Roles | each account's planned role is checked against an identity endpoint; a mismatch fails readiness and blocks the attack |
 | Seed inventory | read-only queries list the seeded users and records before the attack |

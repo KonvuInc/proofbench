@@ -80,7 +80,7 @@ def start_lab(run: Run, plan: dict) -> Deployment:
             f"service '{plan['target']['service']}' runs '{service.get('image')}', plan pins '{plan['target']['image']}'")
 
     # Containment: no route out of the lab network, and no way around it.
-    violations = docker.network_escapes(config)
+    violations = docker.network_escapes(config, run.dir.resolve())
     require(not violations, "lab escapes its network: " + "; ".join(violations))
     docker.write_isolation(run.compose_file, config)
 

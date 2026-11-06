@@ -15,6 +15,13 @@ PLAN = {"claim": "c", "target": {"image": "app:1.0", "service": "app", "base_url
         "readiness": [{"name": "h", "url": "http://app/h", "contains": "ok"}],
         "observations": [{"id": "rows", "service": "db", "cmd": "count"}],
         "assertions": [{"id": "rows", "claim": "row added", "oracle": {"type": "state_diff", "observation": "rows"}}]}
+ROOT = Path("/runs/20260101-000000-abcd")
+
+
+def bind(source: str) -> dict:
+    return {"volumes": [{"type": "bind", "source": source, "target": "/mnt"}]}
+
+
 ATTACKED = {"readiness": {"ok": True}, "attack": {"plan_sha256": "x", "commands": 1}}
 
 
@@ -36,19 +43,44 @@ class Isolation(unittest.TestCase):
     def test_refuses_escapes_from_lab_network(self):
         config = {"services": {"app": {"network_mode": "host"}},
                   "networks": {"ext": {"external": True}, "default": {}}}
-        self.assertEqual(len(docker.network_escapes(config)), 2)
-        self.assertEqual(docker.network_escapes({"services": {"app": {}}, "networks": {"default": {}}}), [])
+        self.assertEqual(len(docker.network_escapes(config, ROOT)), 2)
+        self.assertEqual(docker.network_escapes({"services": {"app": {}}, "networks": {"default": {}}}, ROOT), [])
 
     def test_refuses_escapes_from_the_container(self):
         # Each of these gives a lab service the host, and with it the internet.
         escapes = [{"privileged": True}, {"cap_add": ["NET_ADMIN"]}, {"pid": "host"}, {"ipc": "host"},
-                   {"devices": ["/dev/kmsg"]},
-                   {"volumes": [{"type": "bind", "source": "/var/run/docker.sock", "target": "/var/run/docker.sock"}]},
-                   {"volumes": [{"type": "bind", "source": "/", "target": "/host"}]}]
+                   {"uts": "host"}, {"cgroup": "host"}, {"userns_mode": "host"}, {"devices": ["/dev/kmsg"]},
+                   {"volumes_from": ["container:other"]},
+                   bind("/var/run/docker.sock"), bind("/"), bind("/var/run"), bind("/etc"),
+                   bind(str(Path.home() / ".docker/run/docker.sock")), bind(str(Path.home() / ".ssh")),
+                   bind(f"{ROOT}/../other-run"), {"build": {"context": "/"}},
+                   {"build": {"context": f"{ROOT}/lab", "additional_contexts": {"h": str(Path.home())}}}]
         for svc in escapes:
-            self.assertTrue(docker.network_escapes({"services": {"app": svc}}), svc)
-        ordinary = {"volumes": [{"type": "bind", "source": "/runs/x/lab/seed.py", "target": "/seed.py"}]}
-        self.assertEqual(docker.network_escapes({"services": {"app": ordinary}}), [])
+            self.assertTrue(docker.network_escapes({"services": {"app": svc}}, ROOT), svc)
+
+    def test_refuses_host_files_outside_the_service(self):
+        # Top-level objects can bind host paths too, e.g. a named volume backed by /var/run.
+        for config in ({"volumes": {"v": {"driver_opts": {"type": "none", "o": "bind", "device": "/var/run"}}}},
+                       {"volumes": {"v": {"external": True}}}, {"volumes": {"v": {"driver": "nfs"}}},
+                       {"secrets": {"s": {"file": str(Path.home() / ".ssh/id_rsa")}}},
+                       {"configs": {"c": {"file": "/etc/passwd"}}}):
+            self.assertTrue(docker.network_escapes(config, ROOT), config)
+
+    def test_symlink_out_of_the_run_folder_is_refused(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp).resolve()
+            (root / "lab").mkdir()
+            (root / "lab" / "sock").symlink_to("/var/run")
+            self.assertTrue(docker.network_escapes({"services": {"app": bind(f"{root}/lab/sock")}}, root))
+
+    def test_shipped_lab_layouts_pass(self):
+        # Lab files, attacker fixtures under attack/work, plain named volumes, remote build contexts.
+        config = {"services": {"app": {**bind(f"{ROOT}/lab/seed.py"), "build": {"context": f"{ROOT}/lab"}},
+                               "fixture": bind(f"{ROOT}/lab/../attack/work/graphite"),
+                               "db": {"volumes": [{"type": "volume", "source": "pg", "target": "/var/lib/pg"}],
+                                      "build": {"context": "https://github.com/org/repo.git"}}},
+                  "volumes": {"pg": {"name": "p_pg"}}, "configs": {"c": {"file": f"{ROOT}/lab/app.ini"}}}
+        self.assertEqual(docker.network_escapes(config, ROOT), [])
 
     def test_observation_cannot_read_attacker_files(self):
         # A witness that cats what the attacker wrote is the attacker grading itself.
@@ -254,6 +286,7 @@ class Lifecycle(unittest.TestCase):
         (src / "lab").mkdir()
         (src / "lab" / "compose.yml").write_text("services: {app: {image: 'app:1.0'}}")
         (src / "attack" / "work" / "blob.bin").write_bytes(b"\xff\xfe" + b"abc123")
+        (src / "attack" / "work" / "passwd").symlink_to("/etc/passwd")  # attacker-made, points at the host
         (src / "attack" / "log.jsonl").write_text(json.dumps({"cmd": "python x", "exit": 0}) + "\n")
 
         cwd = Path.cwd()
@@ -264,6 +297,7 @@ class Lifecycle(unittest.TestCase):
 
         control = Path(out.call_args[0][0])
         self.assertEqual((control / "attack" / "template" / "blob.bin").read_bytes(), b"\xff\xfe{{NONCE}}")
+        self.assertEqual([file.name for file in (control / "attack" / "template").iterdir()], ["blob.bin"])
 
 
 class Packaging(unittest.TestCase):

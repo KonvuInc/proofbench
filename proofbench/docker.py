@@ -75,21 +75,38 @@ def compose_config(run_id: str, compose_file: Path) -> dict | None:
 
 # Service settings that hand a lab container the host (and so the internet).
 HOST_ACCESS_KEYS = ("network_mode", "privileged", "cap_add", "devices")
-HOST_NAMESPACES = ("pid", "ipc")
-HOST_PATHS = ("/var/run/docker.sock", "/run/docker.sock", "/")
+HOST_NAMESPACES = ("pid", "ipc", "uts", "cgroup", "userns_mode")
 
 
-def network_escapes(config: dict) -> list[str]:
-    """Ways a lab could leave its sandbox: host namespaces, privileges, the Docker socket, the
-    host filesystem, pre-existing networks. `up` refuses all of them."""
+def _outside(path: str | None, root: Path) -> bool:
+    """A host path outside the run folder, symlinks resolved. Remote build contexts are not host paths."""
+    return bool(path) and Path(path).is_absolute() and not Path(path).resolve().is_relative_to(root)
+
+
+def network_escapes(config: dict, root: Path) -> list[str]:
+    """Ways a lab could leave its sandbox: host namespaces, privileges, pre-existing networks, and
+    any host file outside the run folder `root` (the Docker socket, the host filesystem). `up`
+    refuses all of them."""
     errors = []
     for name, svc in config.get("services", {}).items():
         errors += [f"service '{name}' sets {key}" for key in HOST_ACCESS_KEYS if svc.get(key)]
         errors += [f"service '{name}' shares the host {key} namespace" for key in HOST_NAMESPACES
                    if svc.get(key) == "host"]
-        errors += [f"service '{name}' mounts {vol['source']}" for vol in svc.get("volumes", [])
-                   if vol.get("type") == "bind" and vol.get("source") in HOST_PATHS]
+        errors += [f"service '{name}' mounts {vol['source']}, outside the run folder" for vol in svc.get("volumes", [])
+                   if vol.get("type") == "bind" and _outside(vol.get("source"), root)]
+        errors += [f"service '{name}' mounts volumes from {src}" for src in svc.get("volumes_from", [])
+                   if src.startswith("container:")]
+        build = svc.get("build") or {}
+        errors += [f"service '{name}' builds from {ctx}, outside the run folder"
+                   for ctx in [build.get("context"), *(build.get("additional_contexts") or {}).values()]
+                   if _outside(ctx, root)]
 
+    # A named volume with driver options can bind any host path (driver_opts: {o: bind, device: /}).
+    errors += [f"volume '{name}' is external or driver-backed" for name, vol in config.get("volumes", {}).items()
+               if vol.get("external") or vol.get("driver_opts") or vol.get("driver", "local") != "local"]
+    errors += [f"{kind[:-1]} '{name}' reads {item['file']}, outside the run folder"
+               for kind in ("configs", "secrets") for name, item in config.get(kind, {}).items()
+               if _outside(item.get("file"), root)]
     errors += [f"network '{name}' is external" for name, net in config.get("networks", {}).items()
                if net.get("external")]
     return errors
