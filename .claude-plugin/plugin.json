@@ -1,0 +1,5 @@
+{
+  "name": "proofbench",
+  "version": "0.1.0",
+  "description": "A tool for your agent to reproduce vulnerability reports in local Docker labs, with verdicts decided by observation."
+}

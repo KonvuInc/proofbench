@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "proofbench"
+version = "0.1.0"
+description = "A tool for your agent to reproduce vulnerability reports in local Docker labs, with verdicts decided by observation."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+license-files = ["LICENSE"]
+dependencies = []
+
+[project.optional-dependencies]
+summaries = ["anthropic"]
+
+[project.scripts]
+pb = "proofbench.cli:main"
+
+[tool.setuptools]
+packages = ["proofbench"]
+
+[tool.setuptools.package-data]
+proofbench = ["observer/*"]

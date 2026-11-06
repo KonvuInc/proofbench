@@ -1,0 +1,10 @@
+#!/usr/bin/env python3
+"""Entry point: `pb <command>`. Stdlib only; Docker does the rest."""
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from proofbench.cli import main
+
+main()
